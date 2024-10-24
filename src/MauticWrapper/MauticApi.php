@@ -160,7 +160,51 @@ class MauticAPI {
             echo 'Error: ' . $e->getMessage();
         }
     }
+    // Segment API functionality integrated directly into MauticAPI
+    public function createContactToSegment($contactData, $segmentData) {
+        try {
+            // Add contact
+            $contactResponse = $this->createContact($contactData);
+            if (isset($contactResponse['contact']['id'])) {
+                $contactId = $contactResponse['contact']['id'];
+                echo "Contact added successfully with ID: $contactId<br>";
+            } else {
+                echo "Failed to add contact: " . json_encode($contactResponse) . "<br>"; // Log full response
+            }
 
+            // // Add segment and handle response
+            $segmentResponse = $this->createSegment($segmentData);
+
+            // Check if segment was added successfully
+            if (isset($segmentResponse['list']['id'])) {
+                $segmentId = $segmentResponse['list']['id'];
+                echo "Segment added successfully with ID: $segmentId<br>";
+            } else {
+                // Log the entire response for debugging purposes
+                echo "Failed to add segment: " . json_encode($segmentResponse, JSON_PRETTY_PRINT) . "<br>";
+            }
+
+                // Step 3: Add the contact to the segment
+            $addContactToSegmentResponse = $this->addContactToSegmentApi($segmentId, $contactId);
+            // Print the full response for debugging
+            echo "Response from adding contact to segment: " . json_encode($addContactToSegmentResponse) . "<br>";
+
+            echo "isset('success'): " . (isset($addContactToSegmentResponse['success']) ? 'true' : 'false') . "<br>";
+
+            echo "Success value: " . $addContactToSegmentResponse['success'] . "<br>";
+
+            // Check for success using the specific response format
+            if (isset($addContactToSegmentResponse['success']) && $addContactToSegmentResponse['success'] === 1) {
+                echo "Contact added to segment successfully.<br>";
+            } else {
+                echo "Failed to add contact to segment--------: " . json_encode($addContactToSegmentResponse) . "<br>";
+            }
+            return $addContactToSegmentResponse;
+
+        } catch (RequestException $e) {
+            echo 'Error: ' . $e->getMessage();
+        }
+    }
     private function addContactToSegmentApi($segmentId, $contactId) {
         try {
             $response = $this->client->post("segments/$segmentId/contact/$contactId/add");
